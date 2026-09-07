@@ -5,7 +5,7 @@ CFLAGS ?= -std=c99 -O2 -Wall -Wextra
 
 all: gentileset
 
-gentileset: gentileset.c lodepng.c lodepng.h
+gentileset: gentileset.c gentileset.h lodepng.c lodepng.h
 	$(CC) $(CFLAGS) -o $@ gentileset.c lodepng.c
 
 clean:

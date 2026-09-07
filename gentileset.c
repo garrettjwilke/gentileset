@@ -9,6 +9,7 @@
  * Indexed-color PNGs keep their original palette.
  */
 
+#include "gentileset.h"
 #include "lodepng.h"
 
 #include <limits.h>
@@ -28,26 +29,6 @@ typedef struct {
     int got_width;
     int got_height;
 } Options;
-
-typedef struct {
-    unsigned char *px;
-    unsigned w;
-    unsigned h;
-    int bpp;
-    unsigned char clear[4];
-    unsigned char palette[256][4];
-    unsigned palettesize;
-    int indexed;
-} Image;
-
-typedef struct {
-    int tw;
-    int th;
-    int left;
-    int right;
-    int up;
-    int bottom;
-} Cuts;
 
 /* 3x3-to-4x4 subtile rules: target tile, then 9 source tiles in section order. */
 static const int threexthree_data[][20] = {
@@ -313,7 +294,7 @@ static unsigned char *pixel_at(const Image *im, int x, int y)
     return im->px + ((size_t)y * im->w + (size_t)x) * (size_t)im->bpp;
 }
 
-static int image_alloc(Image *im, unsigned w, unsigned h, const Image *like)
+int image_alloc(Image *im, unsigned w, unsigned h, const Image *like)
 {
     size_t n;
 
@@ -341,7 +322,7 @@ static int image_alloc(Image *im, unsigned w, unsigned h, const Image *like)
     return 1;
 }
 
-static void image_free(Image *im)
+void image_free(Image *im)
 {
     free(im->px);
     im->px = NULL;
@@ -499,7 +480,7 @@ static unsigned png_fail(unsigned err, const char *what)
     return err;
 }
 
-static int load_png(const char *path, Image *im)
+int load_png(const char *path, Image *im)
 {
     unsigned char *file = NULL;
     size_t filesize = 0;
@@ -581,7 +562,7 @@ static int load_png(const char *path, Image *im)
     return 1;
 }
 
-static int save_png(const char *path, const Image *im)
+int save_png(const char *path, const Image *im)
 {
     unsigned err;
     unsigned char *png = NULL;
@@ -636,7 +617,19 @@ static int save_png(const char *path, const Image *im)
     return 1;
 }
 
-static int convert_5x3(const Image *src, Image *out, const Cuts *c)
+void gentileset_default_cuts(Cuts *c, int tw, int th)
+{
+    if (!c)
+        return;
+    c->tw = tw;
+    c->th = th;
+    c->left = 0;
+    c->right = 0;
+    c->up = 0;
+    c->bottom = 0;
+}
+
+int convert_5x3(const Image *src, Image *out, const Cuts *c)
 {
     Image temp;
 
@@ -663,6 +656,7 @@ static int convert_5x3(const Image *src, Image *out, const Cuts *c)
     return 1;
 }
 
+#ifndef GENTILESET_NO_MAIN
 int main(int argc, char **argv)
 {
     Options opt;
@@ -703,3 +697,4 @@ int main(int argc, char **argv)
     image_free(&dst);
     return ok ? 0 : 1;
 }
+#endif
